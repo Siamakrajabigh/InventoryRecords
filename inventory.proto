@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+message InventoryRecord {
+  string id = 1;
+  string key_name = 2;
+  string key_value = 3;
+  string val_name = 4;
+  string val_value = 5;
+}
+
+message SearchByIDRequest {
+  string id = 1;
+}
+
+message SearchByIDResponse {
+  InventoryRecord record = 1;
+}
+
+message SearchRequest {
+  string key_name = 1;
+  string key_value = 2;
+}
+
+message SearchResponse {
+  InventoryRecord record = 1;
+}
+
+message SearchRangeRequest {
+  string key_name = 1;
+  string key_value_start = 2;
+  string key_value_end = 3;
+}
+
+message SearchRangeResponse {
+  repeated InventoryRecord records = 1;
+}
+
+message DistributionRequest {
+  string key_name = 1;
+  double percentile = 2;
+}
+
+message DistributionResponse {
+  double value = 1;
+}
+
+message UpdateRequest {
+  string key_name = 1;
+  string key_value = 2;
+  string val_name = 3;
+  string val_val_new = 4;
+}
+
+message UpdateResponse {
+  bool success = 1;
+}
+
+service Inventory {
+  rpc SearchByID (SearchByIDRequest) returns (SearchByIDResponse);
+  rpc Search (SearchRequest) returns (SearchResponse);
+  rpc SearchRange (SearchRangeRequest) returns (SearchRangeResponse);
+  rpc GetDistribution (DistributionRequest) returns (DistributionResponse);
+  rpc Update (UpdateRequest) returns (UpdateResponse);
+}
