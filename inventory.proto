@@ -2,10 +2,15 @@ syntax = "proto3";
 
 message InventoryRecord {
   string id = 1;
-  string key_name = 2;
-  string key_value = 3;
-  string val_name = 4;
-  string val_value = 5;
+  string name = 2;
+  string description = 3;
+  string unit_price = 4;
+  string quantity = 5;
+  string inventory_value = 6;
+  string reorder_level = 7;
+  string reorder_time = 8;
+  string quantity_reorder = 9;
+  string discontinued = 10;
 }
 
 message SearchByIDRequest {

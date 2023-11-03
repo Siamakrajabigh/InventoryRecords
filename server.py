@@ -3,6 +3,7 @@ from concurrent import futures
 import inventory_pb2 as pb2
 import inventory_pb2_grpc as pb2_grpc
 import time
+import pandas as pd
 
 from inventory import InventoryService
 from inventory import InventoryRecord
@@ -13,7 +14,7 @@ class InventoryServicer(pb2_grpc.InventoryServicer):
 
     def SearchByID(self, request, context):
         record = self.service.searchByID(request.id) # type = InventoryRecord
-        print(record.getDict())
+
         response = pb2.SearchByIDResponse(record=record.getDict())
         print('-'*10)
         print(response)
@@ -26,10 +27,11 @@ class InventoryServicer(pb2_grpc.InventoryServicer):
 
     def SearchRange(self, request, context):
         records = self.service.search_range(request.key_name, request.key_value_start, request.key_value_end)
-        result = {"records": []}
-        for record_obj in records: # python types
-            result.records.append(record_obj.getDict())
-        return pb2.SearchRangeResponse(records=result)
+        response_records = [record.getDict() for record in records]
+
+        response = pb2.SearchRangeResponse(records=response_records)
+        return response
+
 
     def GetDistribution(self, request, context):
         value = self.service.getDistribution(request.key_name, request.percentile)
@@ -43,17 +45,37 @@ class InventoryServicer(pb2_grpc.InventoryServicer):
 if __name__ == '__main__':
     # Assuming 'data' is a list of InventoryRecord objects
     # read from csv input and constrcut the objects -> memory
-    data = [
-        InventoryRecord("1", "Category", "Electronics", "Price", "1000"),
-        InventoryRecord("2", "Category", "Clothing", "Price", "50"),
-        # Add more records as needed...
-    ]
+
+    # data = [
+    #     InventoryRecord("IN0001", "Item 1", "Desc 1", "51", "25", "1275", "29", "13", "50", "nan"),
+        
+    #     # Add more records as needed...
+    # ]
+    df = pd.read_excel(r"/content/Inventory list with reorder highlighting.xlsx", header=2)
+    data = []
+
+    # Iterate through the rows of the DataFrame and create InventoryRecord objects
+    for index, row in df.iterrows():
+        record = InventoryRecord(
+            id=str(row['Inventory ID']),
+            name=str(row['Name']),
+            description=str(row['Description']),
+            unit_price=str(row['Unit Price']),
+            quantity=str(row['Quantity in Stock']),
+            inventory_value=str(row['Inventory Value']),
+            reorder_level=str(row['Reorder Level']),
+            reorder_time=str(row['Reorder Time in Days']),
+            quantity_reorder=str(row['Quantity in Reorder']),
+            discontinued=str(row['Discontinued?'])
+        )
+        data.append(record)
 
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     pb2_grpc.add_InventoryServicer_to_server(InventoryServicer(data), server)
     server.add_insecure_port('[::]:50051')
     server.start()
     print("Server started on port 50051")
+
 
     # Set a flag to indicate when to exit
     exit_flag = False
